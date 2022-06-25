@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import './App.css'
 
 function* generateAngles(units: number) {
@@ -36,17 +37,18 @@ function genPerimeter(limit: number, diameter: number): Generator {
 }
 
 export default function App() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const iterations = 1;
   const svgElement = useRef<any>(undefined);
   const bkgColorElement = useRef<any>(undefined);
   const [start, setStart] = useState<number>(1);
-  const [color, setColor] = useState<any>('#000');
+  const [color, setColor] = useState<any>(searchParams.get('fg')||'#000000');
   const [checked, setChecked] = useState<boolean>(false);
-  const [svgBackgroundColor, setSVGBackgroundColor] = useState<any>('transparent');
+  const [svgBackgroundColor, setSVGBackgroundColor] = useState<any>(searchParams.get('bg') ? searchParams.get('bg') : 'transparent');
   const [chart, setChart] = useState<any>([]);
   const [log, setLog] = useState<any>([]);
-  const [modulus, setModulus] = useState<number>(9);
-  const [multiplier, setMultiplier] = useState<number>(2);
+  const [modulus, setModulus] = useState<number>(Number(searchParams?.get('mod') || 9));
+  const [multiplier, setMultiplier] = useState<number>(Number(searchParams?.get('mult') || 2));
   const [spinVortex, setSpinVortex] = useState<boolean>(true);
 
   const getWidth = () => Math.max(1920, modulus);
@@ -79,7 +81,7 @@ export default function App() {
         break;
       }
     }
-    setLog(moves);
+    setLog(moves);   
   }
   const clear = () => {
     setLog([]);
@@ -89,13 +91,24 @@ export default function App() {
       clear();
       setTimeout(() => {
         vortexMath(modulus);
-      }, 20);
+      }, 50);
     } else {
       vortexMath(modulus);
     }
-  }, [start, modulus, multiplier, iterations, color, svgBackgroundColor, checked /* , centerCanvas.current*/]);
-  useEffect(() => {
-  }, [log]);
+    setTimeout(() => {
+      // after math, update URL.
+      setSearchParams({ 
+        mod: String(modulus), 
+        mult: String(multiplier),
+        fg: color,
+        bg: svgBackgroundColor
+      });
+    }, 100);
+  }, [
+    start, modulus, multiplier, iterations, // numbers
+    color, svgBackgroundColor, checked // stylers
+  ]);
+  // download handlers
   function translateSVG() {
     return log.map((i: number) => ` ${chart[i].x},${chart[i].y}`)
   }
@@ -112,6 +125,7 @@ export default function App() {
     let url = URL.createObjectURL(svgBlob);
     triggerDownload(url);
   }
+  // input handlers
   const handleChangeN = (e: any) => {
     if (Math.floor(e.target.value) < 1) {
       return
@@ -135,7 +149,7 @@ export default function App() {
     }
   }
   const handleChangeColor = (e: any) => {
-    setColor(e?.target?.value || '#000');
+    setColor(e?.target?.value || '#000000');
   }
   const handleChangeBackground = (e: any) => {
     let background;
@@ -144,7 +158,7 @@ export default function App() {
       setChecked(toggled);
       background = toggled ? svgBackgroundColor : 'transparent';
     } else {
-      background = checked ? e.target.value : '#000';
+      background = checked ? e.target.value : '#000000';
     }
     const body: any = document.querySelector("body");
     setSVGBackgroundColor(background);
@@ -152,6 +166,7 @@ export default function App() {
       body.style.backgroundColor = background;
     }
   }
+  // elements
   return <div className="app" style={{ color: color, backgroundColor: svgBackgroundColor }}>
     <div className="canvas-inputs">
       <div className="color-pickers">
@@ -195,30 +210,30 @@ export default function App() {
       <input id="spin-vortex" type="checkbox" checked={spinVortex} onChange={() => setSpinVortex(!spinVortex)} />
       <div className={spinVortex ? "svg-vortex" : "svg-wrapper"}>
         <svg viewBox={`0 0 ${getWidth()} ${getWidth()}`} ref={svgElement}>
-          <circle cx={getWidth() / 2} cy={getWidth() / 2} r={getWidth() / 2} stroke={color} stroke-width="3" fill={svgBackgroundColor} />
-          <polyline points={translateSVG()} stroke-width="2" fill="none" stroke={color} />
+          <circle cx={getWidth() / 2} cy={getWidth() / 2} r={getWidth() / 2} stroke={color} strokeWidth="3" fill={svgBackgroundColor} />
+          <polyline points={translateSVG()} strokeWidth="2" fill="none" stroke={color} />
           Sorry, your browser does not support inline SVG.
         </svg>
       </div>
-      </div>
-      <hr />
-      <label>About</label>
-      <div className="youtube-video">
-        <label htmlFor="vortex-math">Vortex Math</label>
-        <iframe name="vortex-math" width="560" height="315" src="https://www.youtube.com/embed/6ZrO90AI0c8" title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen></iframe>
-      </div>
+    </div>
+    <hr />
+    <label>About</label>
+    <div className="youtube-video">
+      <label htmlFor="vortex-math">Vortex Math</label>
+      <iframe name="vortex-math" width="560" height="315" src="https://www.youtube.com/embed/6ZrO90AI0c8" title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen></iframe>
+    </div>
 
-      <div className="youtube-video">
-        <label htmlFor="generators">Javascript Generators</label>
-        <iframe name="generators" width="560" height="315" src="https://www.youtube.com/embed/gu3FfmgkwUc" title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen></iframe>
-      </div>
-      <div className="source-code">
-        <a href="https://github.com/trevorjamesmartin/vortex-math" target="_new">Source Code</a>
-        <p hidden>
-          {log.join(', ')}
-        </p>
-      </div>
+    <div className="youtube-video">
+      <label htmlFor="generators">Javascript Generators</label>
+      <iframe name="generators" width="560" height="315" src="https://www.youtube.com/embed/gu3FfmgkwUc" title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen></iframe>
+    </div>
+    <div className="source-code">
+      <a href="https://github.com/trevorjamesmartin/vortex-math" target="_new">Source Code</a>
+      <p hidden>
+        {log.join(', ')}
+      </p>
+    </div>
 
-
+    
   </div>;
 }
