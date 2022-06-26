@@ -54,8 +54,8 @@ export default function App() {
   const [download, setDownload] = useState<string>(searchParams.get('download') || '');
   const getWidth = () => Math.max(1920, modulus);
   const nextNumber = (n: number, base: number) => {
-    let [a, _] = formula.split('x');
-    let one = Number(a) !== NaN ? Number(a) : 1;
+    let [a,] = formula.split('x');
+    let one = isNaN(Number(a)) ? 1 : Number(a);    
     switch (formula) {
       case "try another formula?":
         // todo...
