@@ -1,5 +1,5 @@
 # Vortex Math
-
+[![](./public/7417-240-mod-mult.svg)](https://vortex.trevor.cloud/?mod=7417&mult=240&fg=%23e88473&bg=transparent&f=1xn)
 A solution to
 
 + [Mathologer: Tesla’s 3-6-9 and Vortex Math: Is this really the key to the universe?](https://youtu.be/6ZrO90AI0c8)

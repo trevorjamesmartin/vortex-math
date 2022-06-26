@@ -213,12 +213,14 @@ export default function App() {
       </div>
       <input type="range" name="modulus" value={modulus} id="mod-slider" min="2" max="10000" onChange={handleChangeN} />
     </div>
-
-    <button onClick={saveToFile}>save to file</button>
+    <button className="save-btn" onClick={saveToFile}>save to file</button>
+    <div>
+    <label htmlFor="spin-vortex">spin</label>
+    <input id="spin-vortex" type="checkbox" checked={spinVortex} onChange={() => setSpinVortex(!spinVortex)} />
+    </div>
     <div className="svg-wrapper">
-      <label htmlFor="spin-vortex">spin</label>
-      <input id="spin-vortex" type="checkbox" checked={spinVortex} onChange={() => setSpinVortex(!spinVortex)} />
-      <h5>{searchParams.get('f') || '1xn'}x{multiplier}%{modulus}</h5>
+    <h5>{searchParams.get('f') || '1xn'}x{multiplier}%{modulus}</h5>
+    <div className="svg-container">
       <div className={spinVortex ? "svg-vortex" : "svg-wrapper"}>
         <svg viewBox={`0 0 ${getWidth()} ${getWidth()}`} ref={svgElement}>
           <circle cx={getWidth() / 2} cy={getWidth() / 2} r={getWidth() / 2} stroke={color} strokeWidth="3" fill={svgBackgroundColor} />
@@ -226,6 +228,7 @@ export default function App() {
           Sorry, your browser does not support inline SVG.
         </svg>
       </div>
+    </div>
     </div>
     <hr />
     <label>About</label>
@@ -244,7 +247,5 @@ export default function App() {
         {log.join(', ')}
       </p>
     </div>
-
-
   </div>;
 }
