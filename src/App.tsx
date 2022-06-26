@@ -42,26 +42,30 @@ export default function App() {
   const svgElement = useRef<any>(undefined);
   const bkgColorElement = useRef<any>(undefined);
   const [start, setStart] = useState<number>(1);
-  const [color, setColor] = useState<any>(searchParams.get('fg')||'#000000');
+  const [color, setColor] = useState<any>(searchParams.get('fg') || '#000000');
   const [checked, setChecked] = useState<boolean>(false);
   const [svgBackgroundColor, setSVGBackgroundColor] = useState<any>(searchParams.get('bg') ? searchParams.get('bg') : 'transparent');
   const [chart, setChart] = useState<any>([]);
   const [log, setLog] = useState<any>([]);
+  const [formula, setFormula] = useState<string>(searchParams.get('f') || '1xn');
   const [modulus, setModulus] = useState<number>(Number(searchParams?.get('mod') || 9));
   const [multiplier, setMultiplier] = useState<number>(Number(searchParams?.get('mult') || 2));
   const [spinVortex, setSpinVortex] = useState<boolean>(true);
-
+  const [download, setDownload] = useState<string>(searchParams.get('download') || '');
   const getWidth = () => Math.max(1920, modulus);
-
-  const nextNumber = (n: number, base: number, formula?: string) => {
+  const nextNumber = (n: number, base: number) => {
+    let [a, _] = formula.split('x');
+    let one = Number(a) !== NaN ? Number(a) : 1;
     switch (formula) {
       case "try another formula?":
         // todo...
         break;
-      case `1 x ${multiplier}`:
-      case `1 * ${multiplier}`:
+      case "nxn":
+        return Math.floor((n * n) * multiplier % base);
+      case `${one}xn`:
+        return Math.floor((one * n) * multiplier % base);
       default:
-        return (n * multiplier) % base;
+        return Math.floor(n * multiplier % base);
     }
     return n
   }
@@ -81,7 +85,7 @@ export default function App() {
         break;
       }
     }
-    setLog(moves);   
+    setLog(moves);
   }
   const clear = () => {
     setLog([]);
@@ -97,12 +101,18 @@ export default function App() {
     }
     setTimeout(() => {
       // after math, update URL.
-      setSearchParams({ 
-        mod: String(modulus), 
+      let params = {
+        mod: String(modulus),
         mult: String(multiplier),
         fg: color,
-        bg: svgBackgroundColor
-      });
+        bg: svgBackgroundColor,
+        f: formula
+      };
+      setSearchParams(params);
+      if (['yes', 'y', 'true', '1'].includes(download?.toLocaleLowerCase())) {
+        setDownload('');
+        setTimeout(() => saveToFile(), 1000);
+      };
     }, 100);
   }, [
     start, modulus, multiplier, iterations, // numbers
@@ -208,6 +218,7 @@ export default function App() {
     <div className="svg-wrapper">
       <label htmlFor="spin-vortex">spin</label>
       <input id="spin-vortex" type="checkbox" checked={spinVortex} onChange={() => setSpinVortex(!spinVortex)} />
+      <h5>{searchParams.get('f') || '1xn'}x{multiplier}%{modulus}</h5>
       <div className={spinVortex ? "svg-vortex" : "svg-wrapper"}>
         <svg viewBox={`0 0 ${getWidth()} ${getWidth()}`} ref={svgElement}>
           <circle cx={getWidth() / 2} cy={getWidth() / 2} r={getWidth() / 2} stroke={color} strokeWidth="3" fill={svgBackgroundColor} />
@@ -234,6 +245,6 @@ export default function App() {
       </p>
     </div>
 
-    
+
   </div>;
 }
