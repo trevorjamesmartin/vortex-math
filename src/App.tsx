@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import './App.css'
+const About = React.lazy(() => import ('./components/About'));
 
 function* generateAngles(units: number) {
   let current: number;
@@ -55,7 +56,7 @@ export default function App() {
   const getWidth = () => Math.max(1920, modulus);
   const nextNumber = (n: number, base: number) => {
     let [a,] = formula.split('x');
-    let one = isNaN(Number(a)) ? 1 : Number(a);    
+    let one = isNaN(Number(a)) ? 1 : Number(a);
     switch (formula) {
       case "try another formula?":
         // todo...
@@ -135,18 +136,26 @@ export default function App() {
     let url = URL.createObjectURL(svgBlob);
     triggerDownload(url);
   }
+  const [sliderLimit, setSliderLimit] = useState(Math.max(10000, modulus));
   // input handlers
   const handleChangeN = (e: any) => {
     if (Math.floor(e.target.value) < 1) {
       return
     }
     switch (e.currentTarget.name) {
+      case 'slider-limit':
+        setSliderLimit(Math.max(e.target.value, modulus));
+        break;
       case 'multiplier':
         setMultiplier(e.target.value);
         break;
       case 'modulus':
-        if (Math.floor(e.target.value) > Math.floor(start)) {
-          setModulus(e.target.value);
+        let m = Math.floor(e.target.value);
+        if (m > Math.floor(start)) {
+          setModulus(m);
+        }
+        if (m > sliderLimit) {
+          setSliderLimit(m);
         }
         break;
       case 'start':
@@ -178,74 +187,88 @@ export default function App() {
   }
   // elements
   return <div className="app" style={{ color: color, backgroundColor: svgBackgroundColor }}>
+
     <div className="canvas-inputs">
-      <div className="color-pickers">
-        <label htmlFor="color">Line Color</label>
-        <input type="color" id="html5colorpicker" value={color} onChange={handleChangeColor}></input>
-        <div>
-          <input type="checkbox" checked={checked} name="checkbox" onChange={handleChangeBackground} />
-          <label htmlFor="backgroundColor">Background Color</label>
+      <div className="colors">
+        <div className="color-fg">
+          <label htmlFor="html5colorpicker">foreground</label>
+          <input type="color" id="html5colorpicker" value={color} onChange={handleChangeColor}></input>
+        </div>
+        <div className="color-bg">
+          <label htmlFor="checkbox-bg" aria-label="select a background color ?" />
+          <input id="checkbox-bg" type="checkbox" checked={checked} name="checkbox" onChange={handleChangeBackground} />
+          <label htmlFor="backgroundColor">background</label>
           <input id="backgroundColor"
             name="backgroundColor" type="color"
             ref={bkgColorElement}
             value={svgBackgroundColor}
-            onChange={handleChangeBackground} />
+            onChange={handleChangeBackground}
+            disabled={!checked}
+          />
         </div>
       </div>
-      <div>
-        <label htmlFor="">Start</label>
-        <input type="number" value={start} name="start" onChange={handleChangeN}></input>
-      </div>
+
       {/* Multiplier */}
       <div className="point-multiplier">
-        <label htmlFor="multiplier">Multiplier</label>
+        <label htmlFor="multiplier">multiplier</label>
         <input type="number" id="multiplier" name="multiplier"
           min={1} value={multiplier}
           onChange={handleChangeN} />
       </div>
-      <input type="range" value={multiplier} id="mult-slider" name="multiplier" min="2" max="10000" onChange={handleChangeN} />
+      <label htmlFor="mult-slider" aria-label="muliplier (slider control)" />
+      <input type="range" value={multiplier} id="mult-slider" name="multiplier" min="2" max={sliderLimit} onChange={handleChangeN} />
       {/* Modulus */}
       <div className="total-points">
-        <label htmlFor="modulus">Modulus</label>
+        <label htmlFor="modulus">modulus</label>
         <input type="number" id="modulus" name="modulus"
           min={start + 1} value={modulus}
           onChange={handleChangeN} />
       </div>
-      <input type="range" name="modulus" value={modulus} id="mod-slider" min="2" max="10000" onChange={handleChangeN} />
-    </div>
-    <button className="save-btn" onClick={saveToFile}>save to file</button>
-    <div>
-    <label htmlFor="spin-vortex">spin</label>
-    <input id="spin-vortex" type="checkbox" checked={spinVortex} onChange={() => setSpinVortex(!spinVortex)} />
-    </div>
-    <div className="svg-wrapper">
-    <h5>{searchParams.get('f') || '1xn'}x{multiplier}%{modulus}</h5>
-    <div className="svg-container">
-      <div className={spinVortex ? "svg-vortex" : "svg-wrapper"}>
-        <svg viewBox={`0 0 ${getWidth()} ${getWidth()}`} ref={svgElement}>
-          <circle cx={getWidth() / 2} cy={getWidth() / 2} r={getWidth() / 2} stroke={color} strokeWidth="3" fill={svgBackgroundColor} />
-          <polyline points={translateSVG()} strokeWidth="2" fill="none" stroke={color} />
-          Sorry, your browser does not support inline SVG.
-        </svg>
-      </div>
-    </div>
-    </div>
-    <hr />
-    <label>About</label>
-    <div className="youtube-video">
-      <label htmlFor="vortex-math">Vortex Math</label>
-      <iframe name="vortex-math" width="560" height="315" src="https://www.youtube.com/embed/6ZrO90AI0c8" title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen></iframe>
+      <label htmlFor="mod-slider" aria-label="modulus (slider control)" />
+      <input type="range" name="modulus" value={modulus} id="mod-slider" min="2" max={sliderLimit} onChange={handleChangeN} />
     </div>
 
-    <div className="youtube-video">
-      <label htmlFor="generators">Javascript Generators</label>
-      <iframe name="generators" width="560" height="315" src="https://www.youtube.com/embed/gu3FfmgkwUc" title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen></iframe>
+    <div className="save-range">
+      <div className="outer-limits range" id="range">
+        <label htmlFor="range">(range)</label>
+        <div className="outer-limit-start">
+          <label htmlFor="starting-point">start</label>
+          <input id="starting-point" type="number" value={start} name="start" onChange={handleChangeN}></input>
+        </div>
+        <div className="outer-limit-end">
+          <label htmlFor="slider-limit">end</label>
+          <input id="slider-limit" type="number" name="slider-limit" value={sliderLimit} onChange={handleChangeN}></input>
+        </div>
+      </div>
     </div>
-    <div className="source-code">
-      <a href="https://github.com/trevorjamesmartin/vortex-math" target="_new">Source Code</a>
-      <p hidden>
-        {log.join(', ')}
-      </p>
+    <div className="checkbox-spin">
+      <button className="save-btn" onClick={saveToFile}>save to file</button>
+      <div>
+        <input id="spin-vortex" type="checkbox" checked={spinVortex} onChange={() => setSpinVortex(!spinVortex)} />
+        <label htmlFor="spin-vortex">spin</label>
+      </div>
+
     </div>
+
+
+    <div className="svg-wrapper">
+      <div className="formula-text">
+        <label>{searchParams.get('f') || '1xn'}x{multiplier}%{modulus}</label>
+      </div>
+      <div className="svg-container">
+        <div className={spinVortex ? "svg-vortex" : "svg-wrapper"}>
+          <svg viewBox={`0 0 ${getWidth()} ${getWidth()}`} ref={svgElement}>
+            <circle cx={getWidth() / 2} cy={getWidth() / 2} r={getWidth() / 2} stroke={color} strokeWidth="3" fill={svgBackgroundColor} />
+            <polyline points={translateSVG()} strokeWidth="2" fill="none" stroke={color} />
+            Sorry, your browser does not support inline SVG.
+          </svg>
+        </div>
+      </div>
+    </div>
+    <hr />
+    <About />
+    <p hidden>
+      {log.join(', ')}
+    </p>
   </div>;
 }
